@@ -12,6 +12,7 @@ import { ENV } from '../env'
 import { lstrings } from '../locales/strings'
 import { getActiveWalletCurrencyInfos } from '../selectors/WalletSelectors'
 import { ThunkAction } from '../types/reduxTypes'
+import { withConsoleSideEffect } from '../util/cleaners/withConsoleSideEffect'
 import { base58 } from '../util/encoding'
 import { fetchPush } from '../util/network'
 import { getDenomFromIsoCode } from '../util/utils'
@@ -59,7 +60,7 @@ export function registerNotificationsV2(changeFiat: boolean = false): ThunkActio
       }
       const response = await fetchPush('v2/device/', opts)
 
-      v2Settings = await asDevicePayload(await response.json())
+      v2Settings = withConsoleSideEffect(asDevicePayload, 'warn')(await response.text())
 
       const currencyWallets = state.core.account.currencyWallets
       const activeCurrencyInfos = getActiveWalletCurrencyInfos(currencyWallets)
@@ -187,7 +188,7 @@ export function setDeviceSettings(data: DeviceUpdatePayload): ThunkAction<Promis
 
     const response = await fetchPush('v2/device/update/', opts)
 
-    return asDevicePayload(await response.json())
+    return withConsoleSideEffect(asDevicePayload, 'warn')(await response.text())
   }
 }
 

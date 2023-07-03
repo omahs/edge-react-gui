@@ -123,12 +123,14 @@ export const asPushEventStatus = asObject<Omit<PushEvent, 'created' | 'deviceId'
 /**
  * POST /v2/device response payload.
  */
-export const asDevicePayload = asObject({
-  events: asArray(asPushEventStatus),
-  ignoreMarketing: asBoolean,
-  ignorePriceChanges: asBoolean,
-  loginIds: asArray(asBase64)
-})
+export const asDevicePayload = asJSON(
+  asObject({
+    events: asArray(asPushEventStatus),
+    ignoreMarketing: asBoolean,
+    ignorePriceChanges: asBoolean,
+    loginIds: asArray(asBase64)
+  })
+)
 
 /**
  * POST /v2/login response payload.
