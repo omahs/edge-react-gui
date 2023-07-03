@@ -1,6 +1,7 @@
 import { asArray, asBoolean, asEither, asJSON, asNull, asNumber, asObject, asOptional, asString, asUnknown, Cleaner, uncleaner } from 'cleaners'
 
 import { asBase64 } from '../../../util/cleaners/asBase64'
+import { withConsoleSideEffect } from '../../../util/cleaners/withConsoleSideEffect'
 import { asBroadcastTx, asPushEventState, asPushMessage, asPushTrigger, asPushTriggerState } from './pushCleaners'
 import { BroadcastTx, PushEvent, PushMessage, PushTrigger } from './pushTypes'
 
@@ -105,18 +106,12 @@ export const wasLoginUpdatePayload = uncleaner(asLoginUpdatePayload)
 // Response cleaners
 // ---------------------------------------------------------------------------
 
-const asPushServerResponse =
-  <T>(asT: Cleaner<T>): Cleaner<T> =>
-  raw => {
-    try {
-      const res = asJSON(asEither(asT, asPushError))(raw)
-      if ('error' in res) throw new Error(res.error)
-      return res
-    } catch (err) {
-      console.warn(`${String(err)}:`, raw)
-      throw err
-    }
-  }
+const asPushServerResponse = <T>(asT: Cleaner<T>): Cleaner<T> =>
+  withConsoleSideEffect(raw => {
+    const res = asJSON(asEither(asT, asPushError))(raw)
+    if ('error' in res) throw new Error(res.error)
+    return res
+  }, 'warn')
 
 /**
  * A push event returned from a query.
