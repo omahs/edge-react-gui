@@ -135,7 +135,7 @@ exports[`OutlinedTextInput should render with some props 1`] = `
           [
             {
               "alignSelf": "flex-start",
-              "fontFamily": "Quicksand-Regular",
+              "fontFamily": "NunitoSans-Regular",
               "fontSize": 22,
               "padding": 0,
             },
@@ -180,7 +180,7 @@ exports[`OutlinedTextInput should render with some props 1`] = `
           [
             {
               "color": "#E85466",
-              "fontFamily": "Quicksand-Regular",
+              "fontFamily": "NunitoSans-Regular",
               "fontSize": 17,
             },
             {
@@ -201,7 +201,7 @@ exports[`OutlinedTextInput should render with some props 1`] = `
         [
           {
             "bottom": -10,
-            "fontFamily": "Quicksand-Regular",
+            "fontFamily": "NunitoSans-Regular",
             "fontSize": 17,
             "position": "absolute",
             "right": 28,
@@ -293,7 +293,7 @@ exports[`OutlinedTextInput should render with some props 1`] = `
             "color": "#FFFFFF",
             "flexGrow": 1,
             "flexShrink": 1,
-            "fontFamily": "Quicksand-Regular",
+            "fontFamily": "NunitoSans-Regular",
             "padding": 0,
           },
           {

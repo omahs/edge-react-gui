@@ -5,7 +5,7 @@ exports[`WalletListFooter should render with loading props 1`] = `
   style={
     {
       "alignItems": "stretch",
-      "borderTopColor": "rgba(255, 255, 255, .1)",
+      "borderTopColor": "#e2722640",
       "borderTopWidth": 1,
       "flex": 1,
       "flexDirection": "row",
@@ -61,12 +61,12 @@ exports[`WalletListFooter should render with loading props 1`] = `
       style={
         [
           {
-            "color": "#00f1a2",
+            "color": "#e27226",
             "fontSize": 34,
           },
           {
-            "color": "#00f1a2",
-            "fontFamily": "Quicksand-Medium",
+            "color": "#e27226",
+            "fontFamily": "NunitoSans-Bold",
             "margin": 6,
           },
           {
@@ -88,14 +88,14 @@ exports[`WalletListFooter should render with loading props 1`] = `
         [
           {
             "color": "#FFFFFF",
-            "fontFamily": "Quicksand-Regular",
+            "fontFamily": "NunitoSans-Regular",
             "fontSize": 22,
             "includeFontPadding": false,
           },
           [
             {
-              "color": "#00f1a2",
-              "fontFamily": "Quicksand-Medium",
+              "color": "#e27226",
+              "fontFamily": "NunitoSans-Bold",
               "margin": 6,
             },
             {
@@ -154,12 +154,12 @@ exports[`WalletListFooter should render with loading props 1`] = `
       style={
         [
           {
-            "color": "#00f1a2",
+            "color": "#e27226",
             "fontSize": 34,
           },
           {
-            "color": "#00f1a2",
-            "fontFamily": "Quicksand-Medium",
+            "color": "#e27226",
+            "fontFamily": "NunitoSans-Bold",
             "margin": 6,
           },
           {
@@ -181,14 +181,14 @@ exports[`WalletListFooter should render with loading props 1`] = `
         [
           {
             "color": "#FFFFFF",
-            "fontFamily": "Quicksand-Regular",
+            "fontFamily": "NunitoSans-Regular",
             "fontSize": 22,
             "includeFontPadding": false,
           },
           [
             {
-              "color": "#00f1a2",
-              "fontFamily": "Quicksand-Medium",
+              "color": "#e27226",
+              "fontFamily": "NunitoSans-Bold",
               "margin": 6,
             },
             {
