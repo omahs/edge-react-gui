@@ -308,6 +308,7 @@ export interface AppConfig {
   website: string
   extraTab?: {
     webviewUrl: string
+    tabType: 'edgeProvider' | 'webview'
     tabTitleKey: LocaleStringKey
     extraTabBarIconFont: string
     extraTabBarIconName: string

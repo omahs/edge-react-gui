@@ -25,7 +25,7 @@ export const coinhubConfig: AppConfig = {
   extraTab: {
     webviewUrl: 'https://coinhubbitcoinwallet.app',
     tabTitleKey: 'title_map',
-    useEdgeProvider: false,
+    tabType: 'edgeProvider',
     extraTabBarIconFont: 'Feather',
     extraTabBarIconName: 'map-pin'
   }
