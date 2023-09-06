@@ -103,7 +103,7 @@ export interface StakePolicy {
 // Change Quote
 // -----------------------------------------------------------------------------
 export interface ChangeQuoteRequest {
-  action: 'stake' | 'unstake' | 'claim' | 'unstakeExact'
+  action: 'stake' | 'unstake' | 'unstakeAndClaim' | 'claim' | 'unstakeExact'
   stakePolicyId: string
   currencyCode: string
   nativeAmount: string
@@ -160,6 +160,7 @@ export interface StakePosition {
   allocations: PositionAllocation[]
   canStake: boolean
   canUnstake: boolean
+  canUnstakeAndClaim: boolean
   canClaim: boolean
 }
 

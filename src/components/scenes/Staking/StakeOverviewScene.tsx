@@ -10,7 +10,7 @@ import { getDisplayDenominationFromState } from '../../../selectors/Denomination
 import { useDispatch, useSelector } from '../../../types/reactRedux'
 import { EdgeSceneProps } from '../../../types/routerTypes'
 import { getTokenId } from '../../../util/CurrencyInfoHelpers'
-import { getAllocationLocktimeMessage, getPolicyIconUris, getPolicyTitleName, getPositionAllocations, getUnstakeText } from '../../../util/stakeUtils'
+import { getAllocationLocktimeMessage, getPolicyIconUris, getPolicyTitleName, getPositionAllocations } from '../../../util/stakeUtils'
 import { StakingReturnsCard } from '../../cards/StakingReturnsCard'
 import { SceneWrapper } from '../../common/SceneWrapper'
 import { withWallet } from '../../hoc/withWallet'
@@ -114,8 +114,6 @@ const StakeOverviewSceneComponent = (props: Props) => {
       </SceneWrapper>
     )
 
-  const unstakeText = getUnstakeText(stakePolicy)
-
   return (
     <SceneWrapper scroll background="theme">
       <SceneHeader title={title} withTopMargin />
@@ -149,7 +147,14 @@ const StakeOverviewSceneComponent = (props: Props) => {
         />
       )}
       <MainButton
-        label={unstakeText}
+        label={lstrings.stake_unstake_claim}
+        disabled={!stakePosition?.canUnstakeAndClaim}
+        type="escape"
+        onPress={handleModifyPress('unstakeAndClaim')}
+        marginRem={[0.25, 0.5, 0.25, 0.5]}
+      />
+      <MainButton
+        label={lstrings.stake_unstake}
         disabled={!stakePosition?.canUnstake}
         type="escape"
         onPress={handleModifyPress('unstake')}
