@@ -136,6 +136,7 @@ const policyDefault = {
   stakeProviderInfo,
   disableMaxStake: true,
   hideClaimAction: true,
+  hideUnstakeAndClaimAction: true,
   stakeWarning: null,
   unstakeWarning: null,
   claimWarning: null

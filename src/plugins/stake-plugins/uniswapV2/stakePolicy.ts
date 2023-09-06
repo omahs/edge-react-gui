@@ -23,6 +23,7 @@ export const toStakePolicy =
       stakePolicyId,
       stakeProviderInfo,
       apy,
+      hideUnstakeAction: true,
       stakeAssets,
       rewardAssets
     }
