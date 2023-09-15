@@ -117,7 +117,7 @@ export function EdgeCoreManager(props: Props) {
   ]
 
   let infoServer: string | undefined
-  let loginServer: string | undefined
+  let loginServer: string | undefined = 'https://login-test.edge.app/api'
   let syncServer: string | undefined
 
   if ((ENV.ENABLE_TEST_SERVERS == null && isMaestro()) || ENV.ENABLE_TEST_SERVERS === true) {
