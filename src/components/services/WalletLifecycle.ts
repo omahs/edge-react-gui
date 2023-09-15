@@ -2,6 +2,7 @@ import { EdgeAccount, EdgeContext, EdgeCurrencyWallet } from 'edge-core-js'
 import * as React from 'react'
 import { Platform } from 'react-native'
 
+import { loadUserPausedWallets } from '../../actions/WalletActions'
 import { connect } from '../../types/reactRedux'
 import { WalletListItem } from '../../types/types'
 import { showError } from './AirshipInstance'
@@ -79,8 +80,7 @@ export class WalletLifecycleComponent extends React.Component<Props> {
     // Grab the mutable core state:
     const { paused } = context
     const { currencyWallets } = account
-
-    // If we have become paused, shut down all wallets:
+    // If we have become paused (app into background), shut down all wallets:
     if (paused && !this.paused) {
       this.cancelBoot()
       Promise.all(Object.keys(currencyWallets).map(async walletId => await currencyWallets[walletId].changePaused(true))).catch(showError)
@@ -104,18 +104,24 @@ export class WalletLifecycleComponent extends React.Component<Props> {
       return true
     })
 
-    // Use the sortedWalletList to boot the wallets in the same order they appear in the list
-    for (const walletItem of sortedWalletList) {
-      if (this.booting.length >= BOOT_LIMIT) break
-      const { token, tokenId, wallet, walletId } = walletItem
+    loadUserPausedWallets(account)
+      .then(userPausedWallets => {
+        // Use the sortedWalletList to boot the wallets in the same order they appear in the list
+        for (const walletItem of sortedWalletList) {
+          if (this.booting.length >= BOOT_LIMIT) break
+          const { token, tokenId, wallet, walletId } = walletItem
 
-      // Ignore missing wallets, token rows, started wallets, and already-booting wallets:
-      if (token != null || tokenId != null || wallet == null) continue
-      if (!wallet.paused) continue
-      if (this.booting.find(boot => boot.walletId === walletId) != null) continue
+          // Ignore missing wallets, token rows, started wallets, already-booting
+          // wallets, and user-paused wallets:
+          if (token != null || tokenId != null || wallet == null) continue
+          if (!wallet.paused) continue
+          if (this.booting.find(boot => boot.walletId === walletId) != null) continue
+          if (userPausedWallets[walletId]) continue
 
-      this.booting.push(bootWallet(wallet, this.handleChange))
-    }
+          this.booting.push(bootWallet(wallet, this.handleChange))
+        }
+      })
+      .catch(e => console.error('Error loading paused wallets:', e))
   }
 
   componentDidMount() {

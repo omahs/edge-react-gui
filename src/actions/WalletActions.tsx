@@ -1,6 +1,6 @@
 import { div, log10, lt, round } from 'biggystring'
 import { asArray, asBoolean, asMaybe, asObject, asString, asUnknown } from 'cleaners'
-import { EdgeCurrencyWallet } from 'edge-core-js'
+import { EdgeAccount, EdgeCurrencyWallet } from 'edge-core-js'
 import hashjs from 'hash.js'
 import * as React from 'react'
 import { sprintf } from 'sprintf-js'
@@ -20,6 +20,10 @@ import { getWalletName } from '../util/CurrencyWalletHelpers'
 import { fetchInfo } from '../util/network'
 import { refreshConnectedWallets } from './FioActions'
 
+export interface PausedWalletsData {
+  [walletId: string]: boolean
+}
+
 export interface SelectWalletTokenParams {
   navigation: NavigationBase
   walletId: string
@@ -34,6 +38,7 @@ const activateWalletName: MapObject<{ name: string; notes: string }> = {
   }
 }
 
+const PAUSED_WALLETS_FILE = 'paused_wallets.json'
 const ACTIVATION_TOAST_AUTO_HIDE_MS = 5000
 
 export function selectWalletToken({ navigation, walletId, tokenId, alwaysActivate }: SelectWalletTokenParams): ThunkAction<Promise<boolean>> {
@@ -430,4 +435,36 @@ export function checkCompromisedKeys(navigation: NavigationBase): ThunkAction<Pr
 
     await writeSyncedSettings(account, { ...settings, securityCheckedWallets })
   }
+}
+
+/**
+ * Saves the user-paused wallets. User-paused wallets will not boot
+ */
+export const saveUserPausedWallets = async (account: EdgeAccount, pausedWalletsData: PausedWalletsData): Promise<void> => {
+  const disklet = account.disklet
+
+  try {
+    const dataToSave = JSON.stringify(pausedWalletsData)
+    await disklet.setText(PAUSED_WALLETS_FILE, dataToSave)
+  } catch (error) {
+    await disklet.setText(PAUSED_WALLETS_FILE, '')
+  }
+}
+
+/**
+ * Saves the user-paused wallets. User-paused wallets will not boot
+ */
+export const loadUserPausedWallets = async (account: EdgeAccount): Promise<PausedWalletsData> => {
+  const disklet = account.disklet
+  if (disklet != null) {
+    try {
+      const dataText = await disklet.getText(PAUSED_WALLETS_FILE)
+
+      const pausedWalletsData: PausedWalletsData = JSON.parse(dataText)
+      return pausedWalletsData
+    } catch (error) {
+      saveUserPausedWallets(account, {}).catch(e => console.error('Error saving initial paused wallets:', e))
+    }
+  }
+  return {}
 }

@@ -20,6 +20,7 @@ import { validatePassword } from './AccountActions'
 import { showDeleteWalletModal } from './DeleteWalletModalActions'
 import { showResyncWalletModal } from './ResyncWalletModalActions'
 import { showSplitWalletModal } from './SplitWalletModalActions'
+import { loadUserPausedWallets, saveUserPausedWallets } from './WalletActions'
 
 export type WalletListMenuKey =
   | 'rename'
@@ -31,6 +32,7 @@ export type WalletListMenuKey =
   | 'viewXPub'
   | 'getRawKeys'
   | 'rawDelete'
+  | 'togglePause'
   | string // for split keys like splitbitcoincash, splitethereum, etc.
 
 export function walletListMenuAction(
@@ -289,6 +291,22 @@ export function walletListMenuAction(
             }}
           />
         ))
+      }
+    }
+
+    case 'togglePause': {
+      return async (dispatch, getState) => {
+        const state = getState()
+        const { account } = state.core
+        const { currencyWallets } = state.core.account
+        const wallet = currencyWallets[walletId]
+
+        const pausedWalletsData = await loadUserPausedWallets(account)
+        const isPaused = pausedWalletsData != null && pausedWalletsData[walletId]
+        pausedWalletsData[walletId] = !isPaused
+
+        await wallet.changePaused(!isPaused)
+        await saveUserPausedWallets(account, pausedWalletsData)
       }
     }
 

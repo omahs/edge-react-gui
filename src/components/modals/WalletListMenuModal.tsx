@@ -4,6 +4,7 @@ import { AirshipBridge } from 'react-native-airship'
 import AntDesignIcon from 'react-native-vector-icons/AntDesign'
 import { sprintf } from 'sprintf-js'
 
+import { loadUserPausedWallets } from '../../actions/WalletActions'
 import { walletListMenuAction, WalletListMenuKey } from '../../actions/WalletListMenuActions'
 import { getSpecialCurrencyInfo } from '../../constants/WalletAndCurrencyConstants'
 import { useAsyncEffect } from '../../hooks/useAsyncEffect'
@@ -36,13 +37,14 @@ interface Props {
 
 const icons = {
   delete: 'warning',
-  rawDelete: 'warning',
   exportWalletTransactions: 'export',
   getRawKeys: 'lock',
   getSeed: 'key',
   manageTokens: 'plus',
+  rawDelete: 'warning',
   rename: 'edit',
   resync: 'sync',
+  togglePause: 'pause',
   viewPrivateViewKey: 'eye',
   viewXPub: 'eye'
 }
@@ -170,6 +172,10 @@ export function WalletListMenuModal(props: Props) {
     const result: Option[] = []
 
     const { pluginId } = wallet.currencyInfo
+    const pausedWalletsData = (await loadUserPausedWallets(account)) ?? {}
+    const isPaused = pausedWalletsData != null && pausedWalletsData[walletId]
+    result.push({ label: isPaused ? lstrings.fragment_wallets_unpause_wallet : lstrings.fragment_wallets_pause_wallet, value: 'togglePause' })
+
     for (const option of WALLET_LIST_MENU) {
       const { pluginIds, label, value } = option
 
