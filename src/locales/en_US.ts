@@ -1371,6 +1371,16 @@ const strings = {
 
   // #endregion Light Account
 
+  // #region Transfer Modal
+  transfer_from_bank_title: 'From Bank/Cash',
+  transfer_from_wallet_title: 'From Another Wallet/Exchange',
+  transfer_to_bank_title: 'To Bank/Cash',
+  transfer_to_another_wallet_title: 'To Another Wallet/Exchange',
+  transfer_to_from_bank_title_1s: 'To %1$s From Bank/Cash',
+  select_receive_asset: 'Select Asset to Receive',
+
+  // #endregion Transfer Modal
+
   // Currency Labels
   currency_label_AFN: 'Afghani',
   currency_label_ALL: 'Lek',
