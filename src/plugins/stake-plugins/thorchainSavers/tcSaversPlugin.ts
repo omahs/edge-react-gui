@@ -592,9 +592,9 @@ const unstakeRequestInner = async (opts: EdgeGuiPluginOptions, request: ChangeQu
   const walletBalance = wallet.balances[currencyCode]
   const { minAmount } = policyCurrencyInfo
 
-  if (lt(walletBalance, TC_SAVERS_WITHDRAWAL_SCALE_UNITS)) {
-    throw new InsufficientFundsError({ currencyCode })
-  }
+  // if (lt(walletBalance, TC_SAVERS_WITHDRAWAL_SCALE_UNITS)) {
+  //   throw new InsufficientFundsError({ currencyCode })
+  // }
 
   let stakedAmount = '0'
   let earnedAmount = '0'

@@ -7619,9 +7619,9 @@ ecdsa-sig-formatter@1.0.11:
   dependencies:
     safe-buffer "^5.0.1"
 
-"ecpair@git+https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4":
+"ecpair@https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4":
   version "2.1.0"
-  resolved "git+https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4"
+  resolved "https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4"
   dependencies:
     "@types/bs58check" "^2.1.0"
     base-x "^4.0.0"
