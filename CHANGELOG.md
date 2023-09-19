@@ -3,6 +3,7 @@
 ## Unreleased
 
 - changed: Replace text 'plugins' with 'providers' in Buy/Sell
+- fixed: Min/max price label position on the Markets charts
 - fixed: Prevent setting invalid spending limits
 - fixed: Turning off 'Dark Mode' causes crash
 - fixed: Incorrect wording when disabling a token
