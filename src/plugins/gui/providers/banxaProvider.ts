@@ -4,7 +4,7 @@ import { asArray, asMaybe, asNumber, asObject, asString, asValue } from 'cleaner
 import URL from 'url-parse'
 
 import { fetchInfo } from '../../../util/network'
-import { consify, makeUuid } from '../../../util/utils'
+import { consify, makeUuid, snooze } from '../../../util/utils'
 import { FiatDirection, FiatPaymentType } from '../fiatPluginTypes'
 import {
   FiatProvider,
@@ -223,6 +223,7 @@ export const banxaProvider: FiatProviderFactory = {
       partnerIcon,
       pluginDisplayName,
       getSupportedAssets: async ({ direction, paymentTypes }): Promise<FiatProviderAssetMap> => {
+        await snooze(50)
         // Return nothing if paymentTypes are not supported by this provider
         if (!paymentTypes.some(paymentType => allowedPaymentTypes[direction][paymentType] === true)) return { crypto: {}, fiat: {} }
 
