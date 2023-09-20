@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Experiment config support between gui and login-ui
+- added: Experiment config for "Create Account" and "Login" button labels
 - changed: Replace text 'plugins' with 'providers' in Buy/Sell
 - fixed: Prevent setting invalid spending limits
 - fixed: Turning off 'Dark Mode' causes crash
