@@ -12,12 +12,12 @@ import { initializeAccount, logoutRequest } from '../../actions/LoginActions'
 import { serverSettingsToNotificationSettings, setDeviceSettings } from '../../actions/NotificationActions'
 import { cacheStyles, Theme, useTheme } from '../../components/services/ThemeContext'
 import { ENV } from '../../env'
+import { ExperimentConfig, getExperimentConfig } from '../../experimentConfig'
 import { useAsyncEffect } from '../../hooks/useAsyncEffect'
 import { useAsyncValue } from '../../hooks/useAsyncValue'
 import { useHandler } from '../../hooks/useHandler'
 import { useWatch } from '../../hooks/useWatch'
 import { lstrings } from '../../locales/strings'
-import { getStickyConfig, StickyConfig } from '../../stickyConfig'
 import { config } from '../../theme/appConfig'
 import { useDispatch, useSelector } from '../../types/reactRedux'
 import { EdgeSceneProps } from '../../types/routerTypes'
@@ -62,7 +62,7 @@ export function LoginSceneComponent(props: Props) {
   const [notificationPermissionsInfo, setNotificationPermissionsInfo] = React.useState<NotificationPermissionsInfo | undefined>()
   const [passwordRecoveryKey, setPasswordRecoveryKey] = React.useState<string | undefined>()
   const [legacyLanding, setLegacyLanding] = React.useState<boolean | undefined>(isMaestro() ? false : undefined)
-  const [stickyConfig, setStickyConfig] = React.useState<StickyConfig>()
+  const [experimentConfig, setExperimentConfig] = React.useState<ExperimentConfig>()
 
   const fontDescription = React.useMemo(
     () => ({
@@ -184,16 +184,16 @@ export function LoginSceneComponent(props: Props) {
     dispatch(showSendLogsModal()).catch(err => showError(err))
   })
 
-  // Wait for the sticky config to initialize before rendering anything
+  // Wait for the experiment config to initialize before rendering anything
   useAsyncEffect(async () => {
     if (isMaestro()) return
 
-    const stickyConfig = await getStickyConfig()
-    setStickyConfig(stickyConfig)
-    setLegacyLanding(stickyConfig.legacyLanding === 'legacyLanding')
+    const experimentConfig = await getExperimentConfig()
+    setExperimentConfig(experimentConfig)
+    setLegacyLanding(experimentConfig.legacyLanding === 'legacyLanding')
   }, [])
 
-  return loggedIn || (!isMaestro() && stickyConfig == null) ? (
+  return loggedIn || (!isMaestro() && experimentConfig == null) ? (
     <LoadingScene />
   ) : (
     <View style={styles.container} testID="edge: login-scene">
@@ -213,7 +213,7 @@ export function LoginSceneComponent(props: Props) {
         primaryLogoCallback={handleSendLogs}
         recoveryLogin={passwordRecoveryKey}
         skipSecurityAlerts
-        featureFlags={stickyConfig}
+        featureFlags={experimentConfig}
         onComplete={maybeHandleComplete}
         onLogEvent={logEvent}
         onLogin={handleLogin}
