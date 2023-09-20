@@ -17,7 +17,7 @@ import { useAsyncValue } from '../../hooks/useAsyncValue'
 import { useHandler } from '../../hooks/useHandler'
 import { useWatch } from '../../hooks/useWatch'
 import { lstrings } from '../../locales/strings'
-import { getStickyConfigValue } from '../../stickyConfig'
+import { getStickyConfig, StickyConfig } from '../../stickyConfig'
 import { config } from '../../theme/appConfig'
 import { useDispatch, useSelector } from '../../types/reactRedux'
 import { EdgeSceneProps } from '../../types/routerTypes'
@@ -62,6 +62,7 @@ export function LoginSceneComponent(props: Props) {
   const [notificationPermissionsInfo, setNotificationPermissionsInfo] = React.useState<NotificationPermissionsInfo | undefined>()
   const [passwordRecoveryKey, setPasswordRecoveryKey] = React.useState<string | undefined>()
   const [legacyLanding, setLegacyLanding] = React.useState<boolean | undefined>(isMaestro() ? false : undefined)
+  const [stickyConfig, setStickyConfig] = React.useState<StickyConfig>()
 
   const fontDescription = React.useMemo(
     () => ({
@@ -186,10 +187,13 @@ export function LoginSceneComponent(props: Props) {
   // Wait for the sticky config to initialize before rendering anything
   useAsyncEffect(async () => {
     if (isMaestro()) return
-    setLegacyLanding((await getStickyConfigValue('legacyLanding')) === 'legacyLanding')
+
+    const stickyConfig = await getStickyConfig()
+    setStickyConfig(stickyConfig)
+    setLegacyLanding(stickyConfig.legacyLanding === 'legacyLanding')
   }, [])
 
-  return loggedIn ? (
+  return loggedIn || (!isMaestro() && stickyConfig == null) ? (
     <LoadingScene />
   ) : (
     <View style={styles.container} testID="edge: login-scene">
@@ -209,6 +213,7 @@ export function LoginSceneComponent(props: Props) {
         primaryLogoCallback={handleSendLogs}
         recoveryLogin={passwordRecoveryKey}
         skipSecurityAlerts
+        featureFlags={stickyConfig}
         onComplete={maybeHandleComplete}
         onLogEvent={logEvent}
         onLogin={handleLogin}

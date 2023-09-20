@@ -13,7 +13,8 @@ const stickyConfigDisklet = makeReactNativeDisklet()
 const stickyDistribution = {
   swipeLastUsp: 0.5,
   createAccountType: 0.1,
-  legacyLanding: 0.5
+  legacyLanding: 0.5,
+  createAndLoginText: 0.5
 }
 
 /**
@@ -39,6 +40,12 @@ const asStickyConfig = asObject({
   legacyLanding: asOptional<'legacyLanding' | 'uspLanding'>(
     asValue('legacyLanding', 'uspLanding'),
     generateStickyConfigVal('legacyLanding') ? 'legacyLanding' : 'uspLanding'
+  ),
+
+  // Replaces "Create Account" with [TBD]
+  createAndLoginText: asOptional<'signupSignin' | 'createLogin'>(
+    asValue('signupSignin', 'createLogin'),
+    generateStickyConfigVal('createAndLoginText') ? 'signupSignin' : 'createLogin'
   )
 })
 
