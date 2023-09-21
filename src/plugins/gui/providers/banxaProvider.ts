@@ -3,6 +3,8 @@ import { gt, lt } from 'biggystring'
 import { asArray, asMaybe, asNumber, asObject, asString, asValue } from 'cleaners'
 import URL from 'url-parse'
 
+import { SendScene2Params } from '../../../components/scenes/SendScene2'
+import { BooleanMap } from '../../../types/types'
 import { fetchInfo } from '../../../util/network'
 import { consify, makeUuid, snooze } from '../../../util/utils'
 import { FiatDirection, FiatPaymentType } from '../fiatPluginTypes'
@@ -36,7 +38,16 @@ const allowedPaymentTypes: AllowedPaymentTypes = {
     sepa: false, // Leave this to Bity for now
     turkishbank: true
   },
-  sell: {}
+  sell: {
+    directtobank: true,
+    fasterpayments: true,
+    interac: true,
+    iobank: true,
+    payid: true,
+    pix: true,
+    sepa: false, // Leave this to Bity for now
+    turkishbank: true
+  }
 }
 
 const asBanxaApiKeys = asObject({
@@ -127,7 +138,7 @@ const asBanxaPricesResponse = asObject({
 })
 
 const asBanxaQuote = asObject({
-  // id: asString,
+  id: asString,
   // account_id: asString,
   // account_reference: asString,
   // order_type: asString,
@@ -144,6 +155,58 @@ const asBanxaQuote = asObject({
 const asBanxaQuoteResponse = asObject({
   data: asObject({
     order: asBanxaQuote
+  })
+})
+
+const asBanxaOrderStatus = asValue(
+  'pendingPayment',
+  'waitingPayment',
+  'paymentReceived',
+  'inProgress',
+  'coinTransferred',
+  'cancelled',
+  'declined',
+  'expired',
+  'complete',
+  'refunded'
+)
+
+const asBanxaOrderResponse = asObject({
+  data: asObject({
+    order: asObject({
+      id: asString, // "b445de966b55fa23c79aaeeb0f75577d",
+      // account_id: asString, // "9fa7a88710e2265c532e87aade064a9e",
+      // account_reference: asString, // "0f060f09-0009-4800-800a-05030b0f0207",
+      // order_type: asString, // "CRYPTO-SELL",
+      // payment_type: asString, // null,
+      // ref: asMaybe(asNumber), // null,
+      // fiat_code: asString, // "AUD",
+      // fiat_amount: asNumber, // 500,
+      // coin_code: asString, // "BTC",
+      coin_amount: asNumber, // 0,
+      wallet_address: asMaybe(asString), // null,
+      wallet_address_tag: asMaybe(asString), // null,
+      // fee: asMaybe(asNumber), // null,
+      // fee_tax: asMaybe(asNumber), // null,
+      // payment_fee: asMaybe(asNumber), // null,
+      // payment_fee_tax: asMaybe(asNumber), // null,
+      // commission: asMaybe(asNumber), // null,
+      // tx_hash: asString, // null,
+      // tx_confirms: asMaybe(asNumber), // null,
+      // created_date: asString, // "20-Sep-2023",
+      // created_at: asString, // "20-Sep-2023 23:01:19",
+      status: asBanxaOrderStatus, // "pendingPayment",
+      // completed_at: asString, // null,
+      // merchant_fee: asMaybe(asNumber), // null,
+      // merchant_commission: asMaybe(asNumber), // null,
+      // meta_data: asString, // null,
+      blockchain: asObject({
+        id: asNumber, // 1,
+        code: asString, // "BTC",
+        description: asString // "Bitcoin"
+      })
+      // network_fee: asMaybe(asNumber) // null
+    })
   })
 })
 
@@ -195,6 +258,14 @@ const CURRENCY_PLUGINID_MAP = {
   XLM: 'stellar',
   XRP: 'ripple',
   XTZ: 'tezos'
+}
+
+const DEBUG_TRUE = Math.random() !== -1
+
+const NEEDS_ORDER_CONFIRM: Record<string, BooleanMap> = {
+  ethereum: {
+    USDC: true
+  }
 }
 
 const asInfoCreateHmacResponse = asObject({ signature: asString })
@@ -273,11 +344,9 @@ export const banxaProvider: FiatProviderFactory = {
         return allowedCurrencyCodes[direction]
       },
       getQuote: async (params: FiatProviderGetQuoteParams): Promise<FiatProviderQuote> => {
-        const { pluginId, regionCode, exchangeAmount, amountType, paymentTypes, fiatCurrencyCode, displayCurrencyCode, direction } = params
+        const { pluginId, regionCode, exchangeAmount, amountType, paymentTypes, fiatCurrencyCode, displayCurrencyCode, direction, tokenId } = params
         if (!paymentTypes.some(paymentType => allowedPaymentTypes[direction][paymentType] === true))
           throw new FiatProviderError({ providerId, errorType: 'paymentUnsupported' })
-
-        if (direction !== 'buy') throw new Error('Only buy supported by Banxa')
 
         // Check if the region, payment type, and fiat/crypto codes are supported
         const fiat = fiatCurrencyCode.replace('iso:', '')
@@ -383,21 +452,118 @@ export const banxaProvider: FiatProviderFactory = {
             const { showUi, coreWallet } = approveParams
             const receiveAddress = await coreWallet.getReceiveAddress()
 
-            const bodyParams = {
+            const bodyParams: any = {
               payment_method_id: paymentObj?.id ?? '',
               account_reference: banxaUsername,
-              source: fiat,
-              target: banxaCoin,
-              wallet_address: receiveAddress?.publicAddress,
-              source_amount: exchangeAmount,
-              // target_amount: targetAmount,
+              source: queryParams.source,
+              target: queryParams.target,
               blockchain: banxaChain,
               return_url_on_success: 'https://deep.edge.app' // TODO: fix
+            }
+            if (direction === 'buy') {
+              bodyParams.wallet_address = receiveAddress.publicAddress
+            } else {
+              bodyParams.refund_address = receiveAddress.publicAddress
+            }
+
+            if (queryParams.source_amount != null) {
+              bodyParams.source_amount = queryParams.source_amount
+            } else {
+              bodyParams.target_amount = queryParams.target_amount
             }
             const response = await banxaFetch({ method: 'POST', url, path: 'api/orders', apiKey, bodyParams })
             const banxaQuote = asBanxaQuoteResponse(response)
 
-            await showUi.openExternalWebView({ url: banxaQuote.data.order.checkout_url })
+            let interval: ReturnType<typeof setInterval> | undefined
+
+            if (direction === 'buy') {
+              await showUi.openExternalWebView({ url: banxaQuote.data.order.checkout_url })
+            } else {
+              const { checkout_url: checkoutUrl, id } = banxaQuote.data.order
+              await showUi.openWebView({
+                url: checkoutUrl,
+                onClose: () => {
+                  if (interval != null) {
+                    clearInterval(interval)
+                  }
+                },
+                onUrlChange: async (changeUrl: string) => {
+                  console.log(`Whoohoo, got url=${changeUrl}`)
+                  const banxaUrl = new URL(checkoutUrl)
+                  console.log(`URL OBJ`, JSON.stringify(banxaUrl, null, 2))
+                  const { origin } = banxaUrl
+                  if (url === `${origin}/status` || DEBUG_TRUE) {
+                    if (interval == null) {
+                      let insideInterval = false
+                      interval = setInterval(async () => {
+                        try {
+                          if (insideInterval) return
+                          insideInterval = true
+                          const orderResponse = await banxaFetch({ method: 'GET', url, path: `api/orders/${id}`, apiKey })
+                          console.log(JSON.stringify(orderResponse, null, 2))
+                          const order = asBanxaOrderResponse(orderResponse)
+                          const { coin_amount: coinAmount, status, wallet_address: publicAddress } = order.data.order
+                          const nativeAmount = await coreWallet.denominationToNative(coinAmount.toString(), displayCurrencyCode)
+                          console.log(`status: ${status}`)
+                          if (status === 'pendingPayment') {
+                            // Launch the SendScene to make payment
+                            const sendParams: SendScene2Params = {
+                              walletId: coreWallet.id,
+                              tokenId,
+                              spendInfo: {
+                                spendTargets: [
+                                  {
+                                    nativeAmount,
+                                    publicAddress
+                                  }
+                                ]
+                              },
+                              lockTilesMap: {
+                                address: true,
+                                amount: true,
+                                wallet: true
+                              },
+                              hiddenFeaturesMap: {
+                                address: true
+                              }
+                            }
+                            const edgeTx = await showUi.send(sendParams)
+
+                            // At this point we'll call it success
+                            clearInterval(interval)
+                            await showUi.showToast('Sell transaction complete. Funds should arrive in your bank account within the next few hours')
+
+                            // Close the webview
+                            await showUi.exitScene()
+
+                            // Below is an optional step
+                            let needsConfirm = false
+                            try {
+                              needsConfirm = NEEDS_ORDER_CONFIRM[pluginId][displayCurrencyCode] ?? false
+                            } catch (e) {}
+
+                            if (edgeTx != null && needsConfirm) {
+                              const { txid } = edgeTx
+                              // Post the txid back to Banxa
+                              const bodyParams = {
+                                tx_hash: txid,
+                                source_address: receiveAddress.publicAddress,
+                                destination_address: publicAddress
+                              }
+                              await banxaFetch({ method: 'POST', url, path: `api/orders/${id}/confirm`, apiKey, bodyParams })
+                            }
+                          }
+                        } catch (e: any) {
+                          await showUi.showError(e).catch(() => {})
+                        } finally {
+                          insideInterval = false
+                        }
+                      }, 3000)
+                    }
+                  }
+                }
+              })
+            }
           },
           closeQuote: async (): Promise<void> => {}
         }
