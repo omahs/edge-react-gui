@@ -2,13 +2,15 @@
 
 import Bugsnag from '@bugsnag/react-native'
 import { asObject, asString } from 'cleaners'
-import { Text, TextInput } from 'react-native'
+import { LogBox, Text, TextInput } from 'react-native'
 import RNFS from 'react-native-fs'
 
 import { changeTheme, getTheme } from './components/services/ThemeContext'
 import { ENV } from './env'
 import { NumberMap } from './types/types'
 import { log, logToServer } from './util/logger'
+
+LogBox.ignoreAllLogs()
 
 Bugsnag.start({
   onError: event => {
