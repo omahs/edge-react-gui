@@ -101,7 +101,7 @@ export const doRequestAddress = async (navigation: NavigationBase, account: Edge
         const { currencyWallets } = account
         const wallet = currencyWallets[walletId]
 
-        // TODO: Extend getReceiveAddress() to generate the full bitcion:XXXX address instead of using raw addresses here
+        // TODO: Extend getReceiveAddress() to generate the full bitcoin:XXXX address instead of using raw addresses here
         const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
         jsonPayloadMap[`${currencyWallets[walletId].currencyInfo.currencyCode}_${currencyCode}`] = publicAddress
       }
