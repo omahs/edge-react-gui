@@ -52,6 +52,7 @@ const allowedPaymentTypes: AllowedPaymentTypes = {
 
 const asBanxaApiKeys = asObject({
   partnerUrl: asString,
+  hmacUser: asString,
   apiKey: asString
 })
 
@@ -281,7 +282,7 @@ export const banxaProvider: FiatProviderFactory = {
       apiKeys,
       io: { store }
     } = params
-    const { partnerUrl: url, apiKey } = asBanxaApiKeys(apiKeys)
+    const { apiKey, hmacUser, partnerUrl: url } = asBanxaApiKeys(apiKeys)
 
     let banxaUsername = await store.getItem('username').catch(e => undefined)
     if (banxaUsername == null || banxaUsername === '') {
@@ -314,7 +315,7 @@ export const banxaProvider: FiatProviderFactory = {
         }
 
         const promises = [
-          banxaFetch({ method: 'GET', url, path: `api/coins/${direction}`, apiKey }).then(response => {
+          banxaFetch({ method: 'GET', hmacUser, url, path: `api/coins/${direction}`, apiKey }).then(response => {
             const cryptoCurrencies = asBanxaCryptoCoins(response)
             for (const coin of cryptoCurrencies.data.coins) {
               for (const chain of coin.blockchains) {
@@ -327,14 +328,14 @@ export const banxaProvider: FiatProviderFactory = {
             }
           }),
 
-          banxaFetch({ method: 'GET', url, path: `api/fiats/${direction}`, apiKey }).then(response => {
+          banxaFetch({ method: 'GET', hmacUser, url, path: `api/fiats/${direction}`, apiKey }).then(response => {
             const fiatCurrencies = asBanxaFiats(response)
             for (const fiat of fiatCurrencies.data.fiats) {
               allowedCurrencyCodes[direction].fiat['iso:' + fiat.fiat_code] = true
             }
           }),
 
-          banxaFetch({ method: 'GET', url, path: paymentMethodsPath, apiKey }).then(response => {
+          banxaFetch({ method: 'GET', hmacUser, url, path: paymentMethodsPath, apiKey }).then(response => {
             const banxaPayments = asBanxaPaymentMethods(response)
             buildPaymentsMap(banxaPayments, banxaPaymentsMap[direction])
           })
@@ -385,7 +386,7 @@ export const banxaProvider: FiatProviderFactory = {
             throw new FiatProviderError({ providerId, errorType: 'paymentUnsupported' })
           } else {
             // Fetch the payment methods for this specific source crypto asset
-            const pmResponse = await banxaFetch({ method: 'GET', url, path: `api/payment-methods?source=${banxaCoin}`, apiKey })
+            const pmResponse = await banxaFetch({ method: 'GET', hmacUser, url, path: `api/payment-methods?source=${banxaCoin}`, apiKey })
             const banxaPayments = asBanxaPaymentMethods(pmResponse)
             buildPaymentsMap(banxaPayments, banxaPaymentsMap.sell)
             hasFetched = true
@@ -425,7 +426,7 @@ export const banxaProvider: FiatProviderFactory = {
           }
         }
 
-        const response = await banxaFetch({ method: 'GET', url, path: 'api/prices', apiKey, queryParams })
+        const response = await banxaFetch({ method: 'GET', hmacUser, url, path: 'api/prices', apiKey, queryParams })
         const banxaPrices = asBanxaPricesResponse(response)
         const priceQuote = banxaPrices.data.prices[0]
         console.log('Got Banxa Quote:')
@@ -471,7 +472,7 @@ export const banxaProvider: FiatProviderFactory = {
             } else {
               bodyParams.target_amount = queryParams.target_amount
             }
-            const response = await banxaFetch({ method: 'POST', url, path: 'api/orders', apiKey, bodyParams })
+            const response = await banxaFetch({ method: 'POST', hmacUser, url, path: 'api/orders', apiKey, bodyParams })
             const banxaQuote = asBanxaQuoteResponse(response)
 
             let interval: ReturnType<typeof setInterval> | undefined
@@ -488,9 +489,9 @@ export const banxaProvider: FiatProviderFactory = {
                   }
                 },
                 onUrlChange: async (changeUrl: string) => {
-                  console.log(`Whoohoo, got url=${changeUrl}`)
+                  console.log(`onUrlChange url=${changeUrl}`)
                   const banxaUrl = new URL(checkoutUrl)
-                  console.log(`URL OBJ`, JSON.stringify(banxaUrl, null, 2))
+                  // console.log(`URL OBJ`, JSON.stringify(banxaUrl, null, 2))
                   const { origin } = banxaUrl
                   if (url === `${origin}/status` || DEBUG_TRUE) {
                     if (interval == null) {
@@ -499,7 +500,7 @@ export const banxaProvider: FiatProviderFactory = {
                         try {
                           if (insideInterval) return
                           insideInterval = true
-                          const orderResponse = await banxaFetch({ method: 'GET', url, path: `api/orders/${id}`, apiKey })
+                          const orderResponse = await banxaFetch({ method: 'GET', hmacUser, url, path: `api/orders/${id}`, apiKey })
                           console.log(JSON.stringify(orderResponse, null, 2))
                           const order = asBanxaOrderResponse(orderResponse)
                           const { coin_amount: coinAmount, status, wallet_address: publicAddress } = order.data.order
@@ -550,7 +551,7 @@ export const banxaProvider: FiatProviderFactory = {
                                 source_address: receiveAddress.publicAddress,
                                 destination_address: publicAddress
                               }
-                              await banxaFetch({ method: 'POST', url, path: `api/orders/${id}/confirm`, apiKey, bodyParams })
+                              await banxaFetch({ method: 'POST', hmacUser, url, path: `api/orders/${id}/confirm`, apiKey, bodyParams })
                             }
                           }
                         } catch (e: any) {
@@ -575,10 +576,10 @@ export const banxaProvider: FiatProviderFactory = {
   }
 }
 
-const generateHmac = async (apiKey: string, data: string, nonce: string) => {
+const generateHmac = async (apiKey: string, hmacUser: string, data: string, nonce: string) => {
   const body = JSON.stringify({ data })
   const response = await fetchInfo(
-    'v1/createHmac/banxa',
+    `v1/createHmac/${hmacUser}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -597,10 +598,11 @@ const banxaFetch = async (params: {
   url: string
   path: string
   apiKey: string
+  hmacUser: string
   bodyParams?: object
   queryParams?: object
 }): Promise<string> => {
-  const { method, url, path, apiKey, bodyParams, queryParams } = params
+  const { hmacUser, method, url, path, apiKey, bodyParams, queryParams } = params
   const urlObj = new URL(url + '/' + path, true)
   const body = bodyParams != null ? JSON.stringify(bodyParams) : undefined
 
@@ -614,7 +616,7 @@ const banxaFetch = async (params: {
   let hmacData = method + '\n' + hmacpath + '\n' + nonce
   hmacData += method === 'POST' ? '\n' + (body ?? '') : ''
 
-  const hmac = await generateHmac(apiKey, hmacData, nonce)
+  const hmac = await generateHmac(apiKey, hmacUser, hmacData, nonce)
   const options = {
     method: method,
     headers: {
